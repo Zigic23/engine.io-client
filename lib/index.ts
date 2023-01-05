@@ -8,3 +8,4 @@ export { transports } from "./transports/index.js";
 export { installTimerFunctions } from "./util.js";
 export { parse } from "./contrib/parseuri.js";
 export { nextTick } from "./transports/websocket-constructor.js";
+export { Decoder } from "./transports/decoderBase.js";
