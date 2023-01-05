@@ -1,7 +1,7 @@
 import { type Packet } from "engine.io-parser";
 
-export abstract class Decoder {
-    constructor(){}
-
-    public abstract decodePacket(data, binaryType) : Packet
+export class Decoder {
+    public decodePacket(data, binaryType) : Packet {
+        throw "There is no decoder implemented";
+    }
 }
