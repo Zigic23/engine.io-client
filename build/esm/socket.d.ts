@@ -209,7 +209,7 @@ interface SocketReservedEvents {
     upgradeError: (err: Error) => void;
     close: (reason: string, description?: CloseDetails | Error) => void;
 }
-type SocketState = "opening" | "open" | "closing" | "closed";
+declare type SocketState = "opening" | "open" | "closing" | "closed";
 export declare class Socket extends Emitter<Record<never, never>, Record<never, never>, SocketReservedEvents> {
     id: string;
     transport: Transport;
@@ -233,7 +233,7 @@ export declare class Socket extends Emitter<Record<never, never>, Record<never, 
     private readonly port;
     private readonly transports;
     static priorWebsocketSuccess: boolean;
-    static protocol: any;
+    static protocol: number;
     /**
      * Socket constructor.
      *

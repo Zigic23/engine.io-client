@@ -20,7 +20,7 @@ interface TransportReservedEvents {
     pollComplete: () => void;
     drain: () => void;
 }
-type TransportState = "opening" | "open" | "closed" | "pausing" | "paused";
+declare type TransportState = "opening" | "open" | "closed" | "pausing" | "paused";
 export declare abstract class Transport extends Emitter<Record<never, never>, Record<never, never>, TransportReservedEvents> {
     query: Record<string, string>;
     writable: boolean;

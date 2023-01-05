@@ -9,7 +9,7 @@ export declare class WS extends Transport {
      */
     constructor(opts: any);
     get name(): string;
-    doOpen(): any;
+    doOpen(): this;
     /**
      * Adds event listeners to the socket
      *

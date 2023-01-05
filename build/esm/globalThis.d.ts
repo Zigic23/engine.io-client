@@ -1,1 +1,1 @@
-export declare const globalThisShim: any;
+export declare const globalThisShim: typeof globalThis;
