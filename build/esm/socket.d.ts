@@ -1,4 +1,5 @@
 import { Emitter } from "@socket.io/component-emitter";
+import { Decoder } from "./transports/decoderBase.js";
 import { type Packet, type BinaryType, RawData } from "engine.io-parser";
 import { CloseDetails, Transport } from "./transport.js";
 export interface SocketOptions {
@@ -181,6 +182,7 @@ export interface SocketOptions {
      * @default []
      */
     protocols: string | string[];
+    decoder: Decoder;
 }
 interface HandshakeData {
     sid: string;

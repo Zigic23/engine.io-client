@@ -4,6 +4,7 @@ import { decode } from "./contrib/parseqs.js";
 import { parse } from "./contrib/parseuri.js";
 import debugModule from "debug"; // debug()
 import { Emitter } from "@socket.io/component-emitter";
+import { Decoder } from "./transports/decoderBase.js";
 import {
   protocol,
   type Packet,
@@ -219,6 +220,8 @@ export interface SocketOptions {
    * @default []
    */
   protocols: string | string[];
+
+  decoder: Decoder;
 }
 
 interface HandshakeData {
