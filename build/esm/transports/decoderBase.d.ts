@@ -1,4 +1,5 @@
 import { type Packet } from "engine.io-parser";
-export declare class Decoder {
+export declare abstract class Decoder {
+    constructor();
     decodePacket(data: any, binaryType: any): Packet;
 }
