@@ -94,7 +94,7 @@ class Transport extends component_emitter_1.Emitter {
      * @protected
      */
     onData(data) {
-        const packet = (0, engine_io_parser_1.decodePacket)(data, this.socket.binaryType);
+        const packet = this.opts.decoder ? this.opts.decoder.decodePacket(data, this.socket.binaryType) : (0, engine_io_parser_1.decodePacket)(data, this.socket.binaryType);
         this.onPacket(packet);
     }
     /**
