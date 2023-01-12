@@ -1,5 +1,5 @@
 {
-  "name": "@Zigic23/engine.io-client",
+  "name": "@zigic23/engine.io-client",
   "description": "Client for the realtime Engine",
   "license": "MIT",
   "version": "6.3.0",
@@ -95,13 +95,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Zigic23/engine.io-client.git"
+    "url": "https://github.com/zigic23/engine.io-client.git"
   },
   "files": [
     "build/",
     "dist/"
   ],
   "publishConfig": {
-	  "@Zigic23:registry": "https://npm.pkg.github.com"
+	  "@zigic23:registry": "https://npm.pkg.github.com"
   }
 }
