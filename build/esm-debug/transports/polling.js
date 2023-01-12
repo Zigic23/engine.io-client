@@ -1,4 +1,5 @@
 import { Transport } from "../transport.js";
+import debugModule from "debug"; // debug()
 import { yeast } from "../contrib/yeast.js";
 import { encode } from "../contrib/parseqs.js";
 import { encodePayload, decodePayload } from "engine.io-parser";
@@ -6,6 +7,7 @@ import { XHR as XMLHttpRequest } from "./xmlhttprequest.js";
 import { Emitter } from "@socket.io/component-emitter";
 import { installTimerFunctions, pick } from "../util.js";
 import { globalThisShim as globalThis } from "../globalThis.js";
+const debug = debugModule("engine.io-client:polling"); // debug()
 function empty() { }
 const hasXHR2 = (function () {
     const xhr = new XMLHttpRequest({
@@ -63,20 +65,25 @@ export class Polling extends Transport {
     pause(onPause) {
         this.readyState = "pausing";
         const pause = () => {
+            debug("paused");
             this.readyState = "paused";
             onPause();
         };
         if (this.polling || !this.writable) {
             let total = 0;
             if (this.polling) {
+                debug("we are currently polling - waiting to pause");
                 total++;
                 this.once("pollComplete", function () {
+                    debug("pre-pause polling complete");
                     --total || pause();
                 });
             }
             if (!this.writable) {
+                debug("we are currently writing - waiting to pause");
                 total++;
                 this.once("drain", function () {
+                    debug("pre-pause writing complete");
                     --total || pause();
                 });
             }
@@ -91,6 +98,7 @@ export class Polling extends Transport {
      * @private
      */
     poll() {
+        debug("polling");
         this.polling = true;
         this.doPoll();
         this.emitReserved("poll");
@@ -101,6 +109,7 @@ export class Polling extends Transport {
      * @protected
      */
     onData(data) {
+        debug("polling got data %s", data);
         const callback = (packet) => {
             // if its the first message we consider the transport open
             if ("opening" === this.readyState && packet.type === "open") {
@@ -125,6 +134,7 @@ export class Polling extends Transport {
                 this.poll();
             }
             else {
+                debug('ignoring poll - transport state "%s"', this.readyState);
             }
         }
     }
@@ -135,14 +145,17 @@ export class Polling extends Transport {
      */
     doClose() {
         const close = () => {
+            debug("writing close packet");
             this.write([{ type: "close" }]);
         };
         if ("open" === this.readyState) {
+            debug("transport open - closing");
             close();
         }
         else {
             // in case we're trying to close while
             // handshaking is in progress (GH-164)
+            debug("transport not open - deferring close");
             this.once("open", close);
         }
     }
@@ -225,6 +238,7 @@ export class Polling extends Transport {
      * @private
      */
     doPoll() {
+        debug("xhr poll");
         const req = this.request();
         req.on("data", this.onData.bind(this));
         req.on("error", (xhrStatus, context) => {
@@ -261,6 +275,7 @@ export class Request extends Emitter {
         opts.xscheme = !!this.opts.xs;
         const xhr = (this.xhr = new XMLHttpRequest(opts));
         try {
+            debug("xhr open %s: %s", this.method, this.uri);
             xhr.open(this.method, this.uri, this.async);
             try {
                 if (this.opts.extraHeaders) {
@@ -304,6 +319,7 @@ export class Request extends Emitter {
                     }, 0);
                 }
             };
+            debug("xhr data %s", this.data);
             xhr.send(this.data);
         }
         catch (e) {

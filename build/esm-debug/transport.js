@@ -1,6 +1,8 @@
 import { decodePacket } from "engine.io-parser";
 import { Emitter } from "@socket.io/component-emitter";
 import { installTimerFunctions } from "./util.js";
+import debugModule from "debug"; // debug()
+const debug = debugModule("engine.io-client:transport"); // debug()
 class TransportError extends Error {
     constructor(reason, description, context) {
         super(reason);
@@ -66,6 +68,7 @@ export class Transport extends Emitter {
         }
         else {
             // this might happen if the transport was silently closed in the beforeunload event handler
+            debug("transport is not open, discarding packets");
         }
     }
     /**

@@ -3,7 +3,9 @@ import { encode } from "../contrib/parseqs.js";
 import { yeast } from "../contrib/yeast.js";
 import { pick } from "../util.js";
 import { defaultBinaryType, nextTick, usingBrowserWebSocket, WebSocket, } from "./websocket-constructor.js";
+import debugModule from "debug"; // debug()
 import { encodePacket } from "engine.io-parser";
+const debug = debugModule("engine.io-client:websocket"); // debug()
 // detect ReactNative environment
 const isReactNative = typeof navigator !== "undefined" &&
     typeof navigator.product === "string" &&
@@ -105,6 +107,7 @@ export class WS extends Transport {
                     }
                 }
                 catch (e) {
+                    debug("websocket closed before onclose event");
                 }
                 if (lastPacket) {
                     // fake drain

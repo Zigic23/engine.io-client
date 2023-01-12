@@ -2,8 +2,10 @@ import { transports } from "./transports/index.js";
 import { installTimerFunctions, byteLength } from "./util.js";
 import { decode } from "./contrib/parseqs.js";
 import { parse } from "./contrib/parseuri.js";
+import debugModule from "debug"; // debug()
 import { Emitter } from "@socket.io/component-emitter";
 import { protocol, } from "engine.io-parser";
+const debug = debugModule("engine.io-client:socket"); // debug()
 export class Socket extends Emitter {
     /**
      * Socket constructor.
@@ -112,6 +114,7 @@ export class Socket extends Emitter {
      * @private
      */
     createTransport(name) {
+        debug('creating transport "%s"', name);
         const query = Object.assign({}, this.opts.query);
         // append engine.io protocol identifier
         query.EIO = protocol;
@@ -127,6 +130,7 @@ export class Socket extends Emitter {
             secure: this.secure,
             port: this.port,
         });
+        debug("options: %j", opts);
         return new transports[name](opts);
     }
     /**
@@ -157,6 +161,7 @@ export class Socket extends Emitter {
             transport = this.createTransport(transport);
         }
         catch (e) {
+            debug("error while creating transport: %s", e);
             this.transports.shift();
             this.open();
             return;
@@ -170,7 +175,9 @@ export class Socket extends Emitter {
      * @private
      */
     setTransport(transport) {
+        debug("setting transport %s", transport.name);
         if (this.transport) {
+            debug("clearing existing transport %s", this.transport.name);
             this.transport.removeAllListeners();
         }
         // set up transport
@@ -189,27 +196,32 @@ export class Socket extends Emitter {
      * @private
      */
     probe(name) {
+        debug('probing transport "%s"', name);
         let transport = this.createTransport(name);
         let failed = false;
         Socket.priorWebsocketSuccess = false;
         const onTransportOpen = () => {
             if (failed)
                 return;
+            debug('probe transport "%s" opened', name);
             transport.send([{ type: "ping", data: "probe" }]);
             transport.once("packet", (msg) => {
                 if (failed)
                     return;
                 if ("pong" === msg.type && "probe" === msg.data) {
+                    debug('probe transport "%s" pong', name);
                     this.upgrading = true;
                     this.emitReserved("upgrading", transport);
                     if (!transport)
                         return;
                     Socket.priorWebsocketSuccess = "websocket" === transport.name;
+                    debug('pausing current transport "%s"', this.transport.name);
                     this.transport.pause(() => {
                         if (failed)
                             return;
                         if ("closed" === this.readyState)
                             return;
+                        debug("changing transport and sending upgrade packet");
                         cleanup();
                         this.setTransport(transport);
                         transport.send([{ type: "upgrade" }]);
@@ -220,6 +232,7 @@ export class Socket extends Emitter {
                     });
                 }
                 else {
+                    debug('probe transport "%s" failed', name);
                     const err = new Error("probe error");
                     // @ts-ignore
                     err.transport = transport.name;
@@ -242,6 +255,7 @@ export class Socket extends Emitter {
             // @ts-ignore
             error.transport = transport.name;
             freezeTransport();
+            debug('probe transport "%s" failed because of error: %s', name, err);
             this.emitReserved("upgradeError", error);
         };
         function onTransportClose() {
@@ -254,6 +268,7 @@ export class Socket extends Emitter {
         // When the socket is upgraded while we're probing
         function onupgrade(to) {
             if (transport && to.name !== transport.name) {
+                debug('"%s" works - aborting "%s"', to.name, transport.name);
                 freezeTransport();
             }
         }
@@ -278,6 +293,7 @@ export class Socket extends Emitter {
      * @private
      */
     onOpen() {
+        debug("socket open");
         this.readyState = "open";
         Socket.priorWebsocketSuccess = "websocket" === this.transport.name;
         this.emitReserved("open");
@@ -285,6 +301,7 @@ export class Socket extends Emitter {
         // we check for `readyState` in case an `open`
         // listener already closed the socket
         if ("open" === this.readyState && this.opts.upgrade) {
+            debug("starting upgrade probes");
             let i = 0;
             const l = this.upgrades.length;
             for (; i < l; i++) {
@@ -301,6 +318,7 @@ export class Socket extends Emitter {
         if ("opening" === this.readyState ||
             "open" === this.readyState ||
             "closing" === this.readyState) {
+            debug('socket receive: type "%s", data "%s"', packet.type, packet.data);
             this.emitReserved("packet", packet);
             // Socket is live - any packet counts
             this.emitReserved("heartbeat");
@@ -327,6 +345,7 @@ export class Socket extends Emitter {
             }
         }
         else {
+            debug('packet received with socket readyState "%s"', this.readyState);
         }
     }
     /**
@@ -392,6 +411,7 @@ export class Socket extends Emitter {
             !this.upgrading &&
             this.writeBuffer.length) {
             const packets = this.getWritablePackets();
+            debug("flushing %d packets in socket", packets.length);
             this.transport.send(packets);
             // keep track of current length of writeBuffer
             // splice writeBuffer and callbackBuffer on `drain`
@@ -419,10 +439,12 @@ export class Socket extends Emitter {
                 payloadSize += byteLength(data);
             }
             if (i > 0 && payloadSize > this.maxPayload) {
+                debug("only send %d out of %d packets", i, this.writeBuffer.length);
                 return this.writeBuffer.slice(0, i);
             }
             payloadSize += 2; // separator + packet type
         }
+        debug("payload size is %d (max: %d)", payloadSize, this.maxPayload);
         return this.writeBuffer;
     }
     /**
@@ -481,6 +503,7 @@ export class Socket extends Emitter {
     close() {
         const close = () => {
             this.onClose("forced close");
+            debug("socket closing - telling transport to close");
             this.transport.close();
         };
         const cleanupAndClose = () => {
@@ -520,6 +543,7 @@ export class Socket extends Emitter {
      * @private
      */
     onError(err) {
+        debug("socket error %j", err);
         Socket.priorWebsocketSuccess = false;
         this.emitReserved("error", err);
         this.onClose("transport error", err);
@@ -533,6 +557,7 @@ export class Socket extends Emitter {
         if ("opening" === this.readyState ||
             "open" === this.readyState ||
             "closing" === this.readyState) {
+            debug('socket close with reason: "%s"', reason);
             // clear timers
             this.clearTimeoutFn(this.pingTimeoutTimer);
             // stop event from firing again for transport
