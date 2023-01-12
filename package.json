@@ -100,5 +100,8 @@
   "files": [
     "build/",
     "dist/"
-  ]
+  ],
+  "publishConfig": {
+	"@Zigic23:registry": "https://npm.pkg.github.com"
+  }
 }
